@@ -2,13 +2,17 @@ package stripe
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 )
 
-var testAPIKey = os.Getenv("STRIPE_TEST_API_KEY")
+var (
+	testAPIKey = os.Getenv("STRIPE_TEST_API_KEY")
+	testClient *Client
+)
 
 func TestClient_customer_cycle(t *testing.T) {
 	var (
@@ -157,4 +161,95 @@ func TestClient_credit_card_cycle(t *testing.T) {
 	if len(updatedCards) != 0 {
 		t.Fatalf("invalid number of cards, expected %d and received %d", 0, len(updatedCards))
 	}
+}
+
+func ExampleNew() {
+	var err error
+	if testClient, err = New("[Stripe API Key]"); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Client has been initialized! %v\n", testClient)
+}
+
+func ExampleClient_CreateCustomer() {
+	var (
+		customer Customer
+		created  Customer
+		err      error
+	)
+
+	customer.Name = String("Leeroy Jenkins")
+
+	if created, err = testClient.CreateCustomer(customer); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Customer has been created! %v\n", created)
+}
+
+func ExampleClient_GetCustomer() {
+	var (
+		customer Customer
+		err      error
+	)
+
+	if customer, err = testClient.GetCustomer("[Stripe Customer ID]"); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Customer has been retrieved! %v\n", customer)
+}
+
+func ExampleClient_UpdateCustomer() {
+	var (
+		customer Customer
+		updated  Customer
+		err      error
+	)
+
+	customer.Name = String("Leeroy Jenkins (Legend)")
+
+	if updated, err = testClient.UpdateCustomer("[Stripe Customer ID]", customer); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Customer has been updated! %v\n", updated)
+}
+
+func ExampleClient_RemoveCustomer() {
+	var err error
+	if err = testClient.RemoveCustomer("[Stripe Customer ID]"); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Customer has been removed!\n")
+}
+
+func ExampleClient_AddCreditCard() {
+	var (
+		card    Card
+		created Card
+		err     error
+	)
+
+	card.CardNumber = "4242424242424242"
+	card.CVC = String("123")
+	card.ExpirationMonth = 11
+	card.ExpirationYear = 2026
+
+	if created, err = testClient.AddCreditCard("[Stripe Customer ID]", card); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Customer has had Credit Card added! %v\n", created)
+}
+
+func ExampleClient_RemoveCreditCard() {
+	var err error
+	if err = testClient.RemoveCreditCard("[Stripe Customer ID]", "[Stripe Card ID]"); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Customer has had Credit Card remove!\n")
 }
