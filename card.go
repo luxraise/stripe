@@ -1,11 +1,16 @@
 package stripe
 
 import (
-	"fmt"
 	"net/url"
 )
 
 type Card struct {
+	// System fields
+	// ID of tokenized card
+	ID string `json:"id"`
+	// Object type (will be set as "card")
+	Object string `json:"object"`
+
 	// Required fields
 	// Two-digit number representing the card's expiration month.
 	ExpirationMonth int64 `json:"exp_month"`
@@ -37,6 +42,12 @@ type Card struct {
 	// Required in order to add the card to an account; in all other cases, this parameter is not used. When added to an account, the card (which must be a debit card) can be used as a transfer destination for funds in this currency.
 	// Note: This is utilized for connect only
 	Currency *string `json:"currency"`
+
+	// Returned by system, not needed for creation/update
+	Fingerprint string `json:"fingerprint"`
+	LastFour    string `json:"last4"`
+	Brand       string `json:"brand"`
+	CVCCheck    string `json:"cvc_check"`
 }
 
 func (c *Card) ToFormValues() (form url.Values) {
@@ -59,12 +70,4 @@ func (c *Card) AppendFormValues(form url.Values, key string) {
 	setFormStringPtr(form, getFieldKey(key, "zip"), c.Zipcode)
 	setFormStringPtr(form, getFieldKey(key, "country"), c.Country)
 	setFormStringPtr(form, getFieldKey(key, "currency"), c.Currency)
-}
-
-func getFieldKey(key, field string) string {
-	if len(key) == 0 {
-		return field
-	}
-
-	return fmt.Sprintf("%s[%s]", key, field)
 }
