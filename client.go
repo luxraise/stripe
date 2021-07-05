@@ -3,7 +3,6 @@ package stripe
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -114,14 +113,9 @@ func (c *Client) createCardToken(card Card) (created Token, err error) {
 }
 
 func (c *Client) request(method, endpoint string, request Request, response interface{}) (err error) {
-	var body io.Reader
-	if body, err = getRequestBody(request); err != nil {
-		return
-	}
-
-	url := c.getURL(method, endpoint)
-
 	var req *http.Request
+	body := getRequestBody(request)
+	url := c.getURL(method, endpoint)
 	if req, err = http.NewRequest(method, url, body); err != nil {
 		err = fmt.Errorf("error creating request: %v", err)
 		return
