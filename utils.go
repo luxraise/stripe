@@ -34,7 +34,7 @@ type listCardsResponse struct {
 	Data    []Card `json:"data"`
 }
 
-func getRequestBody(request Request) (body io.Reader, err error) {
+func getRequestBody(request Request) (body io.Reader) {
 	if request == nil {
 		return
 	}
@@ -61,8 +61,6 @@ func handleError(r io.Reader) (err error) {
 	if err = handleResponse(r, &value); err != nil {
 		return
 	}
-
-	fmt.Printf("Value? %+v\n", value)
 
 	return &value.Error
 }
@@ -107,9 +105,5 @@ func setFormInt64Ptr(form url.Values, key string, value *int64) {
 }
 
 func getFieldKey(key, field string) string {
-	if len(key) == 0 {
-		return field
-	}
-
 	return fmt.Sprintf("%s[%s]", key, field)
 }
