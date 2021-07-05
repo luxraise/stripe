@@ -20,9 +20,11 @@ const (
 	host       = "https://api.stripe.com"
 	apiVersion = "v1"
 
-	endpointCustomers       = "/customers"
-	endpointCustomersWithID = "/customers/%s"
-	endpointTokens          = "/tokens"
+	endpointCustomers              = "/customers"
+	endpointCustomersWithID        = "/customers/%s"
+	endpointTokens                 = "/tokens"
+	endpointSourcesWithID          = "/customers/%s/sources"
+	endpointSourcesWithIDAndCardID = "/customers/%s/sources/%s"
 )
 
 // New initializes and returns a new Stripe Client
@@ -66,17 +68,45 @@ func (c *Client) UpdateCustomer(stripeUserID string, customer Customer) (updated
 	return
 }
 
-func (c *Client) AddCreditCard(stripeUserID string) (cardID string, err error) {
-	//err = c.request("POST", endpointCustomers, customer, &created)
+func (c *Client) RemoveCustomer(stripeUserID string) (err error) {
+	endpoint := fmt.Sprintf(endpointCustomersWithID, stripeUserID)
+	err = c.request("DELETE", endpoint, nil, nil)
+	return
+}
+
+func (c *Client) AddCreditCard(stripeUserID string, card Card) (created Card, err error) {
+	var token Token
+	if token, err = c.createCardToken(card); err != nil {
+		err = fmt.Errorf("error creating card token: %v", err)
+		return
+	}
+
+	var req sourceRequest
+	req.Source = token.ID
+
+	endpoint := fmt.Sprintf(endpointSourcesWithID, stripeUserID)
+	err = c.request("POST", endpoint, &req, &created)
+	return
+}
+
+func (c *Client) ListCards(stripeUserID string) (cards []Card, err error) {
+	var resp listCardsResponse
+	endpoint := fmt.Sprintf(endpointSourcesWithID, stripeUserID)
+	if err = c.request("GET", endpoint, nil, &resp); err != nil {
+		return
+	}
+
+	cards = resp.Data
 	return
 }
 
 func (c *Client) RemoveCreditCard(stripeUserID, cardID string) (err error) {
-	//err = c.request("POST", endpointCustomers, customer, &created)
+	endpoint := fmt.Sprintf(endpointSourcesWithIDAndCardID, stripeUserID, cardID)
+	err = c.request("DELETE", endpoint, nil, nil)
 	return
 }
 
-func (c *Client) CreateCardToken(card Card) (created Token, err error) {
+func (c *Client) createCardToken(card Card) (created Token, err error) {
 	var token Token
 	token.Card = card
 	err = c.request("POST", endpointTokens, &token, &created)
