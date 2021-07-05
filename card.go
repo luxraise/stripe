@@ -50,13 +50,6 @@ type Card struct {
 	CVCCheck    string `json:"cvc_check"`
 }
 
-func (c *Card) ToFormValues() (form url.Values) {
-	// Pre-allocate values with enough space for the basic user information rows
-	form = make(url.Values, 4)
-	c.AppendFormValues(form, "")
-	return
-}
-
 func (c *Card) AppendFormValues(form url.Values, key string) {
 	setFormInt64(form, getFieldKey(key, "exp_month"), c.ExpirationMonth)
 	setFormInt64(form, getFieldKey(key, "exp_year"), c.ExpirationYear)
