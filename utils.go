@@ -22,6 +22,18 @@ type Request interface {
 	ToFormValues() url.Values
 }
 
+// String will return a string pointer
+func String(str string) *string {
+	return &str
+}
+
+type listCardsResponse struct {
+	Object  string `json:"object"`
+	URL     string `json:"url"`
+	HasMore bool   `json:"has_more"`
+	Data    []Card `json:"data"`
+}
+
 func getRequestBody(request Request) (body io.Reader, err error) {
 	if request == nil {
 		return
@@ -33,6 +45,10 @@ func getRequestBody(request Request) (body io.Reader, err error) {
 }
 
 func handleResponse(r io.Reader, value interface{}) (err error) {
+	if value == nil {
+		return
+	}
+
 	if err = json.NewDecoder(r).Decode(value); err != nil {
 		return fmt.Errorf("error encountered while attempting to decode response as JSON: %v", err)
 	}
@@ -90,7 +106,10 @@ func setFormInt64Ptr(form url.Values, key string, value *int64) {
 	setFormInt64(form, key, *value)
 }
 
-// String will return a string pointer
-func String(str string) *string {
-	return &str
+func getFieldKey(key, field string) string {
+	if len(key) == 0 {
+		return field
+	}
+
+	return fmt.Sprintf("%s[%s]", key, field)
 }
