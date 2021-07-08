@@ -113,12 +113,23 @@ func ExampleClient_RemoveCreditCard() {
 }
 ```
 
+### Client.CreateCharge
+```go
+func ExampleClient_CreateCharge() {
+	var (
+		charge  Charge
+		created Charge
+		err     error
+	)
 
+	charge.Amount = 1337
+	charge.Currency = "usd"
+	charge.Source = "[Stripe source ID]"
 
+	if created, err = testClient.CreateCharge("[Stripe source ID]", charge); err != nil {
+		log.Fatal(err)
+	}
 
-
-
-
-
-
-
+	fmt.Printf("Stripe Charge has been created! %v\n", created)
+}
+```
