@@ -1,6 +1,28 @@
 package stripe
 
-import "net/url"
+import (
+	"encoding/json"
+	"net/url"
+)
+
+type Source string
+
+func (s *Source) UnmarshalJSON(bs []byte) (err error) {
+	var str string
+	if err = json.Unmarshal(bs, &str); err == nil {
+		*s = Source(str)
+		return
+	}
+
+	var c Card
+	// TODO: Add universal obj which switches based on `Object` type
+	if err = json.Unmarshal(bs, &c); err != nil {
+		return
+	}
+
+	*s = Source(c.ID)
+	return
+}
 
 type sourceRequest struct {
 	Source string `json:"source"`
