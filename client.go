@@ -24,6 +24,7 @@ const (
 	endpointTokens                 = "/tokens"
 	endpointSourcesWithID          = "/customers/%s/sources"
 	endpointSourcesWithIDAndCardID = "/customers/%s/sources/%s"
+	endpointCharges                = "/charges"
 )
 
 // New initializes and returns a new Stripe Client
@@ -102,6 +103,12 @@ func (c *Client) ListCards(stripeUserID string) (cards []Card, err error) {
 func (c *Client) RemoveCreditCard(stripeUserID, cardID string) (err error) {
 	endpoint := fmt.Sprintf(endpointSourcesWithIDAndCardID, stripeUserID, cardID)
 	err = c.request("DELETE", endpoint, nil, nil)
+	return
+}
+
+func (c *Client) CreateCharge(stripeUserID string, charge Charge) (created Charge, err error) {
+	charge.StripeUserID = stripeUserID
+	err = c.request("POST", endpointCharges, &charge, &created)
 	return
 }
 

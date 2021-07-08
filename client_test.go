@@ -163,6 +163,59 @@ func TestClient_credit_card_cycle(t *testing.T) {
 	}
 }
 
+func TestClient_CreateCharge(t *testing.T) {
+	var (
+		c   *Client
+		err error
+	)
+
+	if c, err = New(testAPIKey); err != nil {
+		t.Fatal(err)
+	}
+
+	var customer Customer
+	name := fmt.Sprintf("Test %d", time.Now().Unix())
+	customer.Name = &name
+
+	var created Customer
+	if created, err = c.CreateCustomer(customer); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = c.RemoveCustomer(created.ID) }()
+
+	var card Card
+	card.CardNumber = "4242424242424242"
+	card.CVC = String("123")
+	card.ExpirationMonth = 11
+	card.ExpirationYear = 2026
+
+	var createdCard Card
+	if createdCard, err = c.AddCreditCard(created.ID, card); err != nil {
+		t.Fatal(err)
+	}
+
+	var charge Charge
+	charge.Amount = 1337
+	charge.Source = Source(createdCard.ID)
+	charge.Currency = "usd"
+
+	var createdCharge Charge
+	if createdCharge, err = c.CreateCharge(created.ID, charge); err != nil {
+		t.Fatal(err)
+	}
+
+	switch {
+	case createdCharge.Amount != charge.Amount:
+		t.Fatalf("invalid charge amount, expected %d and received %d", charge.Amount, createdCharge.Amount)
+	case createdCharge.Currency != charge.Currency:
+		t.Fatalf("invalid charge amount, expected <%s> and received <%s>", charge.Currency, createdCharge.Currency)
+	case createdCharge.Source != charge.Source:
+		t.Fatalf("invalid charge amount, expected <%s> and received <%s>", charge.Source, createdCharge.Source)
+	case createdCharge.StripeUserID != charge.StripeUserID:
+		t.Fatalf("invalid charge amount, expected <%s> and received <%s>", charge.StripeUserID, createdCharge.StripeUserID)
+	}
+}
+
 func ExampleNew() {
 	var err error
 	if testClient, err = New("[Stripe API Key]"); err != nil {
@@ -252,4 +305,22 @@ func ExampleClient_RemoveCreditCard() {
 	}
 
 	fmt.Printf("Stripe Customer has had Credit Card remove!\n")
+}
+
+func ExampleClient_CreateCharge() {
+	var (
+		charge  Charge
+		created Charge
+		err     error
+	)
+
+	charge.Amount = 1337
+	charge.Currency = "usd"
+	charge.Source = "[Stripe source ID]"
+
+	if created, err = testClient.CreateCharge("[Stripe source ID]", charge); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Charge has been created! %v\n", created)
 }
