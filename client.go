@@ -141,13 +141,13 @@ func (c *Client) request(method, endpoint string, request Request, response inte
 	switch resp.StatusCode {
 	case 200:
 		return handleResponse(resp.Body, response)
-	case 400:
+	case 400, 404:
 		return handleError(resp.Body)
 	case 401:
 		return ErrUnauthorized
 
 	default:
-		return fmt.Errorf("Unexpected status code of: %d", resp.StatusCode)
+		return fmt.Errorf("Unexpected status code of: %d (url: <%s>, method: <%s>)", resp.StatusCode, url, method)
 	}
 }
 
