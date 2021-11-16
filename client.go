@@ -25,6 +25,7 @@ const (
 	endpointSourcesWithID          = "/customers/%s/sources"
 	endpointSourcesWithIDAndCardID = "/customers/%s/sources/%s"
 	endpointCharges                = "/charges"
+	endpointRefunds                = "/refunds"
 )
 
 // New initializes and returns a new Stripe Client
@@ -109,6 +110,11 @@ func (c *Client) RemoveCreditCard(stripeUserID, cardID string) (err error) {
 func (c *Client) CreateCharge(stripeUserID string, charge Charge) (created Charge, err error) {
 	charge.StripeUserID = stripeUserID
 	err = c.request("POST", endpointCharges, &charge, &created)
+	return
+}
+
+func (c *Client) CreateRefund(request RefundRequest) (refund Refund, err error) {
+	err = c.request("POST", endpointRefunds, &request, &refund)
 	return
 }
 

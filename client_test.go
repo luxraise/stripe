@@ -12,6 +12,7 @@ import (
 var (
 	testAPIKey = os.Getenv("STRIPE_TEST_API_KEY")
 	testClient *Client
+	testCharge Charge
 )
 
 func TestClient_customer_cycle(t *testing.T) {
@@ -216,6 +217,61 @@ func TestClient_CreateCharge(t *testing.T) {
 	}
 }
 
+func TestClient_CreateRefund(t *testing.T) {
+	var (
+		c   *Client
+		err error
+	)
+
+	if c, err = New(testAPIKey); err != nil {
+		t.Fatal(err)
+	}
+
+	var customer Customer
+	name := fmt.Sprintf("Test %d", time.Now().Unix())
+	customer.Name = &name
+
+	var created Customer
+	if created, err = c.CreateCustomer(customer); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = c.RemoveCustomer(created.ID) }()
+
+	var card Card
+	card.CardNumber = "4242424242424242"
+	card.CVC = String("123")
+	card.ExpirationMonth = 11
+	card.ExpirationYear = 2026
+
+	var createdCard Card
+	if createdCard, err = c.AddCreditCard(created.ID, card); err != nil {
+		t.Fatal(err)
+	}
+
+	var charge Charge
+	charge.Amount = 1337
+	charge.Source = Source(createdCard.ID)
+	charge.Currency = "usd"
+
+	var createdCharge Charge
+	if createdCharge, err = c.CreateCharge(created.ID, charge); err != nil {
+		t.Fatal(err)
+	}
+
+	var req RefundRequest
+	req.Charge = createdCharge.ID
+	req.Amount = createdCharge.Amount
+
+	var refund Refund
+	if refund, err = c.CreateRefund(req); err != nil {
+		t.Fatal(err)
+	}
+
+	if refund.Amount != req.Amount {
+		t.Fatalf("invalid refund amount, expected %d and received %d", req.Amount, refund.Amount)
+	}
+}
+
 func ExampleNew() {
 	var err error
 	if testClient, err = New("[Stripe API Key]"); err != nil {
@@ -323,4 +379,21 @@ func ExampleClient_CreateCharge() {
 	}
 
 	fmt.Printf("Stripe Charge has been created! %v\n", created)
+}
+
+func ExampleClient_CreateRefund() {
+	var (
+		req    RefundRequest
+		refund Refund
+		err    error
+	)
+
+	req.Charge = testCharge.ID
+	req.Amount = testCharge.Amount
+
+	if refund, err = testClient.CreateRefund(req); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Stripe Refund has been created! %v\n", refund)
 }
