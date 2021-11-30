@@ -153,7 +153,7 @@ func (c *Client) request(method, endpoint string, request Request, response inte
 		return ErrUnauthorized
 
 	default:
-		return fmt.Errorf("Unexpected status code of: %d (url: <%s>, method: <%s>)", resp.StatusCode, url, method)
+		return fmt.Errorf("unexpected status code of: %d (url: <%s>, method: <%s>)", resp.StatusCode, url, method)
 	}
 }
 
